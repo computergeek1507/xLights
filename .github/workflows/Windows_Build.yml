@@ -20,28 +20,11 @@ jobs:
     - name: Download wxWidgets
       run: 
           git clone --depth=1 --shallow-submodules  --recurse-submodules -b xlights_2021.09 https://github.com/dkulp/wxWidgets ..\wxWidgets\
-#         C:\msys64\usr\bin\wget.exe -q https://github.com/dkulp/wxWidgets/archive/refs/tags/xlights_2021.09.zip
 #        C:\msys64\usr\bin\wget.exe -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.4/wxWidgets-3.1.4.zip
         
 #    - name: Extract wxWidgets
 #      run: 
-#        7z x xlights_2021.09.zip "-o..\wxWidgets\"      
 #        7z x wxWidgets-3.1.4.zip "-o..\wxWidgets\"
-
-    - name: List wxWidgets
-      run: 
-        ls .      
-    - name: List2 wxWidgets
-      run: 
-        ls ../  
-    - name: List3 wxWidgets
-      working-directory: ..\wxWidgets\
-      run: 
-        ls .
-    - name: List4 wxWidgets
-      working-directory: ..\wxWidgets\
-      run: 
-        ls include/wx/msw/
 
     - name: Download wxWidgets patch 
       working-directory: ..\wxWidgets\
@@ -93,6 +76,15 @@ jobs:
       with:
         name: xLights_x64_Installer
         path: 'build_scripts\msw\output\**'
+        
+    - name: "Add to Releases"
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+         # automatic_release_tag: latest
+          prerelease: false
+          files: |
+            build_scripts\msw\output\*.exe
 
 #    - name: Upload xFade.exe
 #      uses: actions/upload-artifact@v2
