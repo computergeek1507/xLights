@@ -595,16 +595,11 @@ void AddIcon(wxImageList &list, const std::string &id, double scaleFactor) {
     if (bmp.GetSize() != iconSize) {
         wxImage img = bmp.ConvertToImage();
 #ifdef __WXOSX__
-        img.Rescale(iconSize.x, iconSize.y);
-        wxBitmap bmp2 = wxBitmap(img);
+        img.Rescale(iconSize.x * scaleFactor, iconSize.y * scaleFactor);
+        wxBitmap bmp2 = wxBitmap(img, -1, scaleFactor);
         wxIcon icon;
         icon.CopyFromBitmap(bmp2);
-        int i = list.Add(icon);
-        img = bmp.ConvertToImage();
-        img.Rescale(iconSize.x * scaleFactor, iconSize.y * scaleFactor);
-        bmp2 = wxBitmap(img);
-        icon.CopyFromBitmap(bmp2);
-        list.Replace(i, icon);
+        list.Add(icon);
 #else
         img.Rescale(iconSize.x, iconSize.y);
         wxBitmap bmp2 = wxBitmap(img);
@@ -745,8 +740,8 @@ NewModelBitmapButton* LayoutPanel::AddModelButton(const std::string &type, const
 #if defined(__WXOSX__)
     wxBitmap bitmap(image, -1, 2.0);
 #else
-    image.Rescale(ScaleWithSystemDPI(GetContentScaleFactor(), 24),
-                  ScaleWithSystemDPI(GetContentScaleFactor(), 24),
+    image.Rescale(ScaleWithSystemDPI(24),
+                  ScaleWithSystemDPI(24),
                   wxIMAGE_QUALITY_HIGH);
     wxBitmap bitmap(image);
 #endif
