@@ -20,7 +20,7 @@ jobs:
     - name: Download wxWidgets
       run: 
          C:\msys64\usr\bin\wget.exe -q https://github.com/dkulp/wxWidgets/archive/refs/tags/xlights_2021.09.zip
-        //C:\msys64\usr\bin\wget.exe -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.4/wxWidgets-3.1.4.zip
+#        C:\msys64\usr\bin\wget.exe -q https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.4/wxWidgets-3.1.4.zip
         
     - name: Extract wxWidgets
       run: 
