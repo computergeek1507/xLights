@@ -37,35 +37,35 @@ jobs:
         
     - name: Build wxWidgets
       working-directory: ..\wxWidgets\
-      run: msbuild /m .\build\msw\wx_vc16.sln /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild /m .\build\msw\wx_vc16.sln /p:Configuration="Release" /p:Platform="x64" /std:c++latest
 
     - name: Build xFade
       working-directory: xFade
-      run: msbuild xFade.sln /m /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild xFade.sln /m /p:Configuration="Release" /p:Platform="x64" /std:c++latest
      
     - name: Build xCapture
       working-directory: xCapture
-      run: msbuild xCapture.sln /m /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild xCapture.sln /m /p:Configuration="Release" /p:Platform="x64" /std:c++latest
      
     - name: Build xScanner
       working-directory: xScanner
-      run: msbuild xScanner.sln /m /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild xScanner.sln /m /p:Configuration="Release" /p:Platform="x64" /std:c++latest
       
     - name: Build xSchedule
       working-directory: xSchedule
-      run: msbuild xSchedule.sln -maxcpucount:4 /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild xSchedule.sln -maxcpucount:4 /p:Configuration="Release" /p:Platform="x64" /std:c++latest
       
     - name: Build xSMSDaemon
       working-directory: xSchedule\xSMSDaemon
-      run: msbuild xSMSDaemon.sln /m /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild xSMSDaemon.sln /m /p:Configuration="Release" /p:Platform="x64" /std:c++latest
      
     - name: Build RemoteFalcon
       working-directory: xSchedule\RemoteFalcon
-      run: msbuild RemoteFalcon.sln /m /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild RemoteFalcon.sln /m /p:Configuration="Release" /p:Platform="x64" /std:c++latest
 
     - name: Build xLights
       working-directory: xLights
-      run: msbuild xLights.sln -maxcpucount:4 /p:Configuration="Release" /p:Platform="x64"
+      run: msbuild xLights.sln -maxcpucount:4 /p:Configuration="Release" /p:Platform="x64" /std:c++latest
       
     - name: Build Installer
       working-directory: build_scripts\msw
@@ -81,7 +81,7 @@ jobs:
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-         # automatic_release_tag: latest
+          automatic_release_tag: latest
           prerelease: false
           files: |
             build_scripts\msw\output\*.exe
