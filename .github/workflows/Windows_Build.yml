@@ -32,7 +32,15 @@ jobs:
         ls .      
     - name: List2 wxWidgets
       run: 
-        ls ../      
+        ls ../  
+    - name: List3 wxWidgets
+      working-directory: ..\wxWidgets\
+      run: 
+        ls .
+    - name: List4 wxWidgets
+      working-directory: ..\wxWidgets\
+      run: 
+        ls include/wx/msw/
 
     - name: Download wxWidgets patch 
       working-directory: ..\wxWidgets\
