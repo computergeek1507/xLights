@@ -78,21 +78,14 @@ jobs:
         name: xLights_x64_Installer
         path: 'build_scripts\msw\output\**'
         
-    - name: Copy build-artifacts
-      uses: skx/github-action-publish-binaries@master
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: "Add to Releases"
+      uses: "marvinpinto/action-automatic-releases@latest"
       with:
-          args: "./build_scripts/msw/output/*.exe"
-        
-#   - name: "Add to Releases"
-#     uses: "marvinpinto/action-automatic-releases@latest"
-#     with:
-#         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#         automatic_release_tag: latest
-#         prerelease: false
-#         files: |
-#           "./build_scripts/msw/output/*.exe"
+         repo_token: "${{ secrets.GITHUB_TOKEN }}"
+         automatic_release_tag: latest
+         prerelease: false
+         files: |
+           "./build_scripts/msw/output/*.exe"
 
 #    - name: Upload xFade.exe
 #      uses: actions/upload-artifact@v2
