@@ -84,7 +84,7 @@ jobs:
           automatic_release_tag: latest
           prerelease: false
           files: |
-            build_scripts\msw\output\*.exe
+            build_scripts\msw\output\**.exe
 
 #    - name: Upload xFade.exe
 #      uses: actions/upload-artifact@v2
