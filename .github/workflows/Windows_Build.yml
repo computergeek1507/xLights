@@ -24,7 +24,7 @@ jobs:
         
     - name: Extract wxWidgets
       run: 
-        7z x xlights_2021.09.zip "-o..\wxWidgets\"      
+        7z x wxWidgets-xlights_2021.09.zip "-o..\wxWidgets\"      
 #        7z x wxWidgets-3.1.4.zip "-o..\wxWidgets\"
 
     - name: Download wxWidgets patch 
