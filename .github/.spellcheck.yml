@@ -1,0 +1,16 @@
+matrix:
+- name: CPP
+  sources:
+  - 'xLights/*.{cpp,hpp,c,h}'
+  aspell:
+    lang: en
+  dictionary:
+    wordlists:
+    - .wordlist.txt
+    output: wordlist.dic
+    encoding: utf-8
+  pipeline:
+  - pyspelling.filters.cpp:
+      decode_escapes: true
+      strings: true
+      string_types: s
