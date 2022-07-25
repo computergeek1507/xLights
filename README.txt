@@ -11,6 +11,31 @@ Issue Tracker is found here: www.github.com/smeighan/xLights/issues
 
 XLIGHTS/NUTCRACKER RELEASE NOTES
 ---------------------------------
+
+   -- enh (scott) Added Model Icons to Import Dialog if a rgbeffects file is found.
+   -- bug (scott) Fix Face Dialog Image Download with network drives.
+2022.14 July 10, 2022
+   -- enh (keith) Add a tool for remapping custom models to alternate pixel layouts
+   -- enh (keith) Make random effect generation cancellable
+   -- enh (keith) Add option to RGB Cycle testing to tag every 50th pixel
+   -- enh (keith) Allow user dictionary items to override the standard dictionaries
+   -- enh (keith) Allow visualiser and upload support for APA109 compatible pixels on a WS2811 port
+   -- enh (dkulp) Add host specific media support to FPP connect
+   -- enh (scott) Add backup restore process
+   -- bug (dkulp) Fix some issues where multiple audio devices exist
+   -- bug (dkulp) Fix some crashes where render buffer needs to be larger than model
+   -- bug (dkulp) Fix fractal/ivy wave effect
+   -- bug (dkulp) Fix playlist item duplication in FPP upload
+   -- bug (keith) Fix some ripple parameter scales on S5 import
+   -- bug (keith) Fix rotozoom order not saved
+   -- bug (keith) Fix issue with audio file upload to FalconV4
+   -- bug (keith) Fix export as custom model does not export depth
+   -- bug (keith) Fix some duplication in transition time combobox behaviour
+   -- bug (keith) Fix video reported as missing if using sequence media
+   -- bug (scott) Fix color error in sketch effect
+   -- bug (scott) Fix issue with PiHat upload
+   -- bug (scott) Fix fire effect crash
+   -- bug (moc)   Fix some issues with model state dialog
 2022.13 June 26, 2022
    -- enh (scott) Added Controller Hyperlinks to FPP Connect
    -- enh (scott) Add FPP 6 DPIPixels support
@@ -42,7 +67,7 @@ XLIGHTS/NUTCRACKER RELEASE NOTES
 2022.12 June 7, 2022
    -- enh (scott) Move ScottNation controllers under their own vendor
    -- enh (keith) Rewrite custom model generation to use a faster algorithm
-   -- enh (scott) Add DMX colour wheel support
+   -- enh (scott) Add DMX color wheel support
    -- enh (keith) Lift Falcon V4 max group size to match latest firmware
    -- enh (dkulp) Add twinkly output upload to FPP
    -- enh (dkulp) Merge artnet multi-lines to one when uploading to FPP

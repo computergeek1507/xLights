@@ -59,7 +59,8 @@ private:
 };
 
 #pragma region xlTimerTimer
-xLightsTimer::xLightsTimer()
+xLightsTimer::xLightsTimer() :
+    wxTimer()
 {
     _log = false;
     _suspend = false;
@@ -67,6 +68,7 @@ xLightsTimer::xLightsTimer()
     _t = nullptr;
     _pending = false;
     _name = "";
+    _fired = 0;
 }
 
 xLightsTimer::~xLightsTimer()
@@ -93,6 +95,7 @@ void xLightsTimer::SetName(const std::string& name)
     _name = name; 
     if (_t != nullptr) _t->SetName(name);
 }
+
 bool xLightsTimer::Start(int time/* = -1*/, bool oneShot/* = wxTIMER_CONTINUOUS*/, const std::string& name)
 {
     static log4cpp::Category &logger_timer = log4cpp::Category::getInstance(std::string("log_timer"));
@@ -101,6 +104,9 @@ bool xLightsTimer::Start(int time/* = -1*/, bool oneShot/* = wxTIMER_CONTINUOUS*
     // While there is support for one shot timers here ... it is not the most robust code and should
     // be avoided if possible
     wxASSERT(oneShot == wxTIMER_CONTINUOUS);
+
+    _fired = 0;
+    _startTime = std::chrono::system_clock::now();
 
     if (name != "") _name = name;
 
@@ -136,10 +142,13 @@ void xLightsTimer::DoSendTimer() {
 }
 
 void xLightsTimer::Notify() {
-    if (_suspend)
+    // don't notify if there is still an event processing or we are suspended
+    if (_suspend || _pending)
     {
         return;
     }
+
+    ++_fired;
 
     if (_timerCallback != nullptr)
     {
@@ -149,7 +158,7 @@ void xLightsTimer::Notify() {
     else
     {
         _pending = true;
-        CallAfter(&xLightsTimer::DoSendTimer);
+        wxTimer::CallAfter(&xLightsTimer::DoSendTimer);
     }
 }
 
@@ -160,6 +169,31 @@ int xLightsTimer::GetInterval() const
         return _t->GetInterval();
     }
     return -1;
+}
+
+std::chrono::time_point<std::chrono::system_clock> xLightsTimer::GetNextEventTime()
+{
+    static log4cpp::Category& logger_timer = log4cpp::Category::getInstance(std::string("log_timer"));
+    std::chrono::time_point<std::chrono::system_clock> next = _startTime + std::chrono::milliseconds((_fired + 1) * GetInterval());
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    if (now > next) {
+        _fired = std::chrono::duration_cast<std::chrono::milliseconds>(now - next).count() / GetInterval();
+        ++_fired;
+        next = _startTime + std::chrono::milliseconds((_fired + 1) * GetInterval());
+        logger_timer.debug("Timer missed some frames.");
+    }
+    //wxASSERT(next >= now);
+    return next;
+}
+
+inline void xLightsTimer::Suspend(bool suspend)
+{
+    if (!suspend) {
+        _fired = 0;
+        _startTime = std::chrono::system_clock::now();
+    }
+
+    _suspend = suspend;
 }
 
 xlTimerThread::xlTimerThread(const std::string& name, int interval, bool oneshot, xLightsTimer* timer, bool log) : wxThread(wxTHREAD_JOINABLE)
@@ -341,7 +375,6 @@ wxThread::ExitCode xlTimerThread::Entry()
     bool oneshot = _oneshot;
     int interval = _interval;
     int fudgefactor = _fudgefactor;
-    long long last = wxGetLocalTimeMillis().GetValue();
 
     while (!_stop)
     {
@@ -375,7 +408,6 @@ wxThread::ExitCode xlTimerThread::Entry()
             }
 
             logger_timer.debug("THREAD: Timer %s thread unsuspended.", (const char *)_name.c_str());
-            last = wxGetLocalTimeMillis().GetValue();
         }
 
         oneshot = _oneshot;
@@ -383,15 +415,23 @@ wxThread::ExitCode xlTimerThread::Entry()
 
         if (!_stop)
         {
-            long long now = wxGetLocalTimeMillis().GetValue();
-            long long toSleep = last + interval + fudgefactor - now;
+            long long toSleep = 0;
+            auto nextTime = _timer->GetNextEventTime();
+            auto now = std::chrono::system_clock::now();
+            if (nextTime - std::chrono::milliseconds(_fudgefactor) > now) {
+                toSleep = std::chrono::duration_cast<std::chrono::milliseconds>(nextTime - now - std::chrono::milliseconds(fudgefactor)).count();
+            } else {
+                logger_timer.debug("THREAD: Timer %s did not need to sleep.", (const char*)_name.c_str());
+            }
+            
             //if (log)
             //{
             //    logger_base.debug("Timer sleeping for %ldms", (std::max)(1, (int)toSleep));
             //}
-            DoSleep((std::max)(1, (int)toSleep));
+            if (toSleep > 0) {
+                DoSleep((std::max)(1, (int)toSleep));
+            }
 
-            last = wxGetLocalTimeMillis().GetValue();
             bool suspend = _suspend;
             fudgefactor = _fudgefactor;
             if (!_stop && !suspend)
