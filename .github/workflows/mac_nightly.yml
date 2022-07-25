@@ -27,7 +27,7 @@ jobs:
 
     - name: Build wxWidgets
       working-directory: macOS/scripts/
-      run: ./BuildLibsRelease.sh
+      run: ./BuildWxWigetsRelease.sh
       
     - name: Build xLights
       working-directory: macOS/scripts/
