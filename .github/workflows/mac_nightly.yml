@@ -22,19 +22,19 @@ jobs:
         git clone --depth=1 --shallow-submodules  --recurse-submodules -b xlights_2022.13 https://github.com/xLightsSequencer/wxWidgets ../wxWidgets/
 
     - name: Build libraries
-      working-directory: /macOS/scripts/
+      working-directory: macOS/scripts/
       run: ./BuildLibsRelease.sh
 
     - name: Build wxWidgets
-      working-directory: /macOS/scripts/
+      working-directory: macOS/scripts/
       run: ./BuildLibsRelease.sh
       
     - name: Build xLights
-      working-directory: /macOS/scripts/
+      working-directory: macOS/scripts/
       run: ./BuildOSXRelease.sh  
 
     - name: Upload Installer
       uses: actions/upload-artifact@v2
       with:
         name: xLights_Installer
-        path: '/macOS/scripts/**'
+        path: 'macOS/scripts/**'
