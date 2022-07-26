@@ -30,8 +30,8 @@ jobs:
       run: ./BuildWxWigetsRelease.sh
       
     - name: Build xLights
-      working-directory: macOS/scripts/
-      run: ./BuildOSXRelease.sh  
+      working-directory: macOS
+      run: ./scripts/BuildOSXRelease.sh  
 
     - name: Upload Installer
       uses: actions/upload-artifact@v2
