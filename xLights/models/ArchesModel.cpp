@@ -379,6 +379,14 @@ void ArchesModel::InitModel()
 }
 
 int ArchesModel::MapToNodeIndex(int strand, int node) const {
+    if (GetLayerSizeCount() != 0) {
+        int idx = 0;
+        for (int x = GetLayerSizeCount() - 1; x > strand; x--) {
+            idx += GetStrandLength(x);
+        }
+        idx += node;
+        return idx;
+    }
     return strand * parm2 + node;
 }
 int ArchesModel::GetNumStrands() const {
@@ -387,6 +395,24 @@ int ArchesModel::GetNumStrands() const {
     }
     return parm1;
 }
+
+int ArchesModel::GetStrandLength(int strand) const
+{
+    if (GetLayerSizeCount() == 0) {
+        return Model::GetStrandLength(strand);
+    } else {
+        return GetLayerSize(strand);
+    }
+}
+
+int ArchesModel::GetMappedStrand(int strand) const
+{
+    if (GetLayerSizeCount() != 0) {
+        return GetLayerSizeCount() - strand - 1;
+    }
+    return strand;
+}
+
 int ArchesModel::CalcCannelsPerString()
 {
     SingleChannel = false;

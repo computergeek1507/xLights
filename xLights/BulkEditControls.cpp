@@ -87,25 +87,35 @@ BulkEditFilePickerCtrl::BulkEditFilePickerCtrl(wxWindow *parent, wxWindowID id, 
     Connect(wxEVT_COMMAND_FILEPICKER_CHANGED, (wxObjectEventFunction)&BulkEditFilePickerCtrl::OnFilePickerCtrl_FileChanged);
     this->GetTextCtrl()->Connect(wxEVT_KILL_FOCUS, (wxObjectEventFunction)&BulkEditFilePickerCtrl::OnFilePickerCtrl_TextLoseFocus, nullptr, this);
     this->GetTextCtrl()->Connect(wxEVT_RIGHT_DOWN, (wxObjectEventFunction)&BulkEditFilePickerCtrl::OnRightDown, nullptr, this);
+    ValidateControl();
+}
+
+void BulkEditFilePickerCtrl::ValidateControl()
+{
+    auto file = GetFileName().GetFullPath();
+    if (file.Contains(',')) {
+        GetTextCtrl()->SetBackgroundColour(*wxYELLOW);
+        SetToolTip("File " + file + " contains characters in the path or filename that will cause issues in xLights. Please rename it.");
+    } else if (!FileExists(file)) {
+        GetTextCtrl()->SetBackgroundColour(*wxRED);
+        SetToolTip("File " + file + " does not exist.");
+    } else {
+        if (GetToolTipText() != "") { // we do this because setting tooltips seems slow
+            SetToolTip("");
+        }
+        GetTextCtrl()->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
+    }
 }
 
 void BulkEditFilePickerCtrl::OnFilePickerCtrl_FileChanged(wxFileDirPickerEvent& event)
 {
-    auto file = GetFileName().GetFullPath();
-    if (file.Contains(',')) {
-        wxMessageBox("File " + file + " contains characters in the path or filename that will cause issues in xLights. Please rename it.", "File name problem", 5L, GetParent());
-    }
+    ValidateControl();
     event.Skip();
 }
 
 void BulkEditFilePickerCtrl::OnFilePickerCtrl_TextLoseFocus(wxFocusEvent& event)
 {
-    auto file = GetFileName().GetFullPath();
-    if (file.Contains(',')) {
-        wxMessageBox("File " + file + " contains characters in the path or filename that will cause issues in xLights. Please rename it.", "File name problem", 5L, GetParent());
-    } else if (file != "" && !wxFile::Exists(file)) {
-        wxMessageBox("File " + file + " does not exist.", "File name problem", 5L, GetParent());
-    }
+    ValidateControl();
     event.Skip();
 }
 

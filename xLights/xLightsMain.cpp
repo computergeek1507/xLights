@@ -452,25 +452,23 @@ END_EVENT_TABLE()
 
 void AddEffectToolbarButtons(EffectManager& manager, xlAuiToolBar* EffectsToolBar)
 {
-
     int size = ScaleWithSystemDPI(16);
-    for (int x = 0; x < manager.size(); x++) {
-        DragEffectBitmapButton* BitmapButton34 = new DragEffectBitmapButton(EffectsToolBar, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(size, size),
-            wxBU_AUTODRAW | wxNO_BORDER, wxDefaultValidator, _T("ID_BITMAPBUTTON38"));
-        BitmapButton34->SetMinSize(wxSize(size, size));
-        BitmapButton34->SetMaxSize(wxSize(size, size));
-#ifndef LINUX
-        BitmapButton34->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BACKGROUND));
+    for (size_t x = 0; x < manager.size(); ++x) {
+        DragEffectBitmapButton* bitmapButton = new DragEffectBitmapButton(EffectsToolBar, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(size, size),
+                                                                            wxBU_AUTODRAW | wxNO_BORDER, wxDefaultValidator, wxString::Format("DragTBButton%02llu", x));
+        bitmapButton->SetMinSize(wxSize(size, size));
+        bitmapButton->SetMaxSize(wxSize(size, size));
+#ifdef __WXOSX__
+        bitmapButton->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BACKGROUND));
 #endif
-        BitmapButton34->SetEffect(manager[x], 16);
-        BitmapButton34->SetBitmapMargins(0, 0);
-        EffectsToolBar->AddControl(BitmapButton34, BitmapButton34->GetToolTipText());
+        bitmapButton->SetEffect(manager[x], 16);
+        bitmapButton->SetBitmapMargins(0, 0);
+        EffectsToolBar->AddControl(bitmapButton, bitmapButton->GetToolTipText());
 
         EffectsToolBar->FindToolByIndex(x)->SetMinSize(wxSize(size, size));
         EffectsToolBar->FindToolByIndex(x)->GetWindow()->SetSizeHints(size, size, size, size);
         EffectsToolBar->FindToolByIndex(x)->GetWindow()->SetMinSize(wxSize(size, size));
         EffectsToolBar->FindToolByIndex(x)->GetWindow()->SetMaxSize(wxSize(size, size));
-
     }
     EffectsToolBar->Realize();
 }
@@ -478,15 +476,19 @@ void AddEffectToolbarButtons(EffectManager& manager, xlAuiToolBar* EffectsToolBa
 inline wxBitmapBundle GetToolbarBitmapBundle(const wxString &id)  {
     return wxArtProvider::GetBitmapBundle(id, wxART_TOOLBAR);
 }
+
 inline wxBitmapBundle GetMenuItemBitmapBundle(const wxString &id)  {
     return wxArtProvider::GetBitmapBundle(id, wxART_MENU);
 }
+
 inline wxBitmapBundle GetOtherBitmapBundle(const wxString &id)  {
     return wxArtProvider::GetBitmapBundle(id, wxART_OTHER);
 }
+
 inline wxBitmapBundle GetButtonBitmapBundle(const wxString &id)  {
     return wxArtProvider::GetBitmapBundle(id, wxART_BUTTON);
 }
+
 xLightsFrame::xLightsFrame(wxWindow* parent, int ab, wxWindowID id) :
     _sequenceElements(this),
     jobPool("RenderPool"),
@@ -6539,9 +6541,9 @@ void xLightsFrame::CheckEffect(Effect* ef, wxFile& f, size_t& errcount, size_t& 
 }
 
 void xLightsFrame::CheckElement(Element* e, wxFile& f, size_t& errcount, size_t& warncount, const std::string& name, const std::string& modelName,
-    bool& videoCacheWarning, bool& disabledEffects, std::list<std::pair<std::string, std::string>>& faces,
-    std::list<std::pair<std::string, std::string>>& states, std::list<std::string>& viewPoints, bool& usesShader,
-    std::list<std::string>& allfiles)
+                                bool& videoCacheWarning, bool& disabledEffects, std::list<std::pair<std::string, std::string>>& faces,
+                                std::list<std::pair<std::string, std::string>>& states, std::list<std::string>& viewPoints, bool& usesShader,
+                                std::list<std::string>& allfiles)
 {
     Model* m = AllModels[modelName];
 
@@ -6549,47 +6551,53 @@ void xLightsFrame::CheckElement(Element* e, wxFile& f, size_t& errcount, size_t&
     for (const auto& el : e->GetEffectLayers()) {
         layer++;
         for (const auto& ef : el->GetEffects()) {
-            RenderableEffect* eff = effectManager[ef->GetEffectIndex()];
-            allfiles.splice(end(allfiles), eff->GetFileReferences(m, ef->GetSettings()));
+            if (ef->GetEffectName() == "Random") {
+                wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) on Model '%s' layer %d is a random effect. This should never happen and may cause other issues.",
+                                                ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
+                                                name, layer);
+                LogAndWrite(f, msg.ToStdString());
+                errcount++;
+            } else {
+                RenderableEffect* eff = effectManager[ef->GetEffectIndex()];
+                allfiles.splice(end(allfiles), eff->GetFileReferences(m, ef->GetSettings()));
 
-            // Check there are nodes to actually render on
-            if (m != nullptr) {
-                if (e->GetType() == ElementType::ELEMENT_TYPE_MODEL) {
-                    if (m->GetNodeCount() == 0) {
-                        wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) on Model '%s' layer %d Has no nodes and wont do anything.",
-                            ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
-                            name, layer);
-                        LogAndWrite(f, msg.ToStdString());
-                        errcount++;
-                    }
-                }
-                else if (e->GetType() == ElementType::ELEMENT_TYPE_STRAND) {
-                    StrandElement* se = (StrandElement*)e;
-                    if (m->GetStrandLength(se->GetStrand()) == 0) {
-                        wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) on Model '%s' layer %d Has no nodes and wont do anything.",
-                            ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
-                            name, layer);
-                        LogAndWrite(f, msg.ToStdString());
-                        errcount++;
-                    }
-                }
-                else if (e->GetType() == ElementType::ELEMENT_TYPE_SUBMODEL) {
-                    Model* se = AllModels[name];
-                    if (se != nullptr) {
-                        if (se->GetNodeCount() == 0) {
+                // Check there are nodes to actually render on
+                if (m != nullptr) {
+                    if (e->GetType() == ElementType::ELEMENT_TYPE_MODEL) {
+                        if (m->GetNodeCount() == 0) {
                             wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) on Model '%s' layer %d Has no nodes and wont do anything.",
-                                ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
-                                name, layer);
+                                                            ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
+                                                            name, layer);
                             LogAndWrite(f, msg.ToStdString());
                             errcount++;
                         }
+                    } else if (e->GetType() == ElementType::ELEMENT_TYPE_STRAND) {
+                        StrandElement* se = (StrandElement*)e;
+                        if (m->GetStrandLength(se->GetStrand()) == 0) {
+                            wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) on Model '%s' layer %d Has no nodes and wont do anything.",
+                                                            ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
+                                                            name, layer);
+                            LogAndWrite(f, msg.ToStdString());
+                            errcount++;
+                        }
+                    } else if (e->GetType() == ElementType::ELEMENT_TYPE_SUBMODEL) {
+                        Model* se = AllModels[name];
+                        if (se != nullptr) {
+                            if (se->GetNodeCount() == 0) {
+                                wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) on Model '%s' layer %d Has no nodes and wont do anything.",
+                                                                ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()),
+                                                                name, layer);
+                                LogAndWrite(f, msg.ToStdString());
+                                errcount++;
+                            }
+                        }
                     }
                 }
-            }
 
-            CheckEffect(ef, f, errcount, warncount, name, modelName, false, videoCacheWarning, disabledEffects, faces, states, viewPoints);
-            if (ef->GetEffectName() == "Shader") {
-                usesShader = true;
+                CheckEffect(ef, f, errcount, warncount, name, modelName, false, videoCacheWarning, disabledEffects, faces, states, viewPoints);
+                if (ef->GetEffectName() == "Shader") {
+                    usesShader = true;
+                }
             }
         }
 
@@ -6600,7 +6608,7 @@ void xLightsFrame::CheckElement(Element* e, wxFile& f, size_t& errcount, size_t&
                 // the start time of an effect should not be before the end of the prior effect
                 if (ef->GetStartTimeMS() < lastEffect->GetEndTimeMS()) {
                     wxString msg = wxString::Format("    ERR: Effect %s (%s-%s) overlaps with Effect %s (%s-%s) on Model '%s' layer %d. This shouldn't be possible.",
-                        ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()), lastEffect->GetEffectName(), FORMATTIME(lastEffect->GetStartTimeMS()), FORMATTIME(lastEffect->GetEndTimeMS()), name, layer);
+                                                    ef->GetEffectName(), FORMATTIME(ef->GetStartTimeMS()), FORMATTIME(ef->GetEndTimeMS()), lastEffect->GetEffectName(), FORMATTIME(lastEffect->GetStartTimeMS()), FORMATTIME(lastEffect->GetEndTimeMS()), name, layer);
                     LogAndWrite(f, msg.ToStdString());
                     errcount++;
                 }

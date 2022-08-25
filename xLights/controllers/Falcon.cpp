@@ -1075,6 +1075,7 @@ bool Falcon::V4_PopulateStrings(std::vector<FALCON_V4_STRING>& uploadStrings, co
                         str.colourOrder = it->_colourOrderSet ? V4_EncodeColourOrder(it->_colourOrder) : colourOrder;
                         str.direction = it->_reverseSet ? (it->_reverse == "F" ? 0 : 1) : direction;
                         str.group = it->_groupCountSet ? it->_groupCount : group;
+                        str.zigcount = it->_zigZagSet ? it->_zigZag : 0; // dont carry between props
                         str.pixels = INTROUNDUPDIV(it->Channels(), GetChannelsPerPixel(it->_protocol)) * str.group;
                         str.protocol = protocols[p / 16];
                         V4_GetStartChannel(it->_universe, it->_universeStartChannel, it->_startChannel, str.universe, str.startChannel);
@@ -1387,7 +1388,7 @@ public:
     void Dump() const {
 
         static log4cpp::Category& logger_base = log4cpp::Category::getInstance(std::string("log_base"));
-        logger_base.debug("    Index %02d Port %02d SmartRemote %d VirtualString %d Prot %d Desc '%s' Uni %d StartChan %d Pixels %d Group %d Direction %s ColorOrder %s Nulls %d Brightness %d Gamma %.1f",
+        logger_base.debug("    Index %02d Port %02d SmartRemote %d VirtualString %d Prot %d Desc '%s' Uni %d StartChan %d Pixels %d Group %d Direction %s ColorOrder %s Nulls %d Brightness %d Gamma %.1f ZigZag %d",
             index,
             port + 1,
             smartRemote,
@@ -1402,7 +1403,7 @@ public:
             (const char*)colourOrder.c_str(),
             nullPixels,
             brightness,
-            gamma);
+            gamma, zig);
     }
     const bool operator>(const FalconString& other) const
     {
@@ -2210,10 +2211,12 @@ bool Falcon::V4_ValidateWAV(const std::string& media)
 
 bool Falcon::UploadSequence(const std::string& seq, const std::string& file, const std::string& media, wxProgressDialog* progress)
 {
+    static log4cpp::Category& logger_base = log4cpp::Category::getInstance(std::string("log_base"));
     bool res = true;
 
     std::string const baseIP = _fppProxy.empty() ? _ip : _fppProxy;
     std::string url = "http://" + baseIP + _baseUrl + "/upload.cgi";
+    logger_base.debug("Uploading to URL: %s", (const char*)url.c_str());
 
     if (media != "") {
         wxFileName fn(media);
@@ -2642,7 +2645,11 @@ bool Falcon::SetOutputs(ModelManager* allmodels, OutputManager* outputManager, C
                 else {
                     fs->groupCount = 1;
                 }
-                fs->zig = 0;
+                if (vs->_zigZagSet) {
+                    fs->zig = std::max(0, vs->_zigZag);
+                } else {
+                    fs->zig = 0;
+                }
                 newStringData.push_back(fs);
             }
         }

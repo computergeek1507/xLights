@@ -1536,6 +1536,7 @@ bool ScheduleManager::IsQuery(const wxString& command)
     if (c == "getplaylists" ||
         c == "getplayliststeps" ||
         c == "getmatrices" ||
+        c == "getplayingeffects" ||
         c == "getqueuedsteps" ||
         c == "listwebfolders" ||
         c == "getnextscheduledplaylist" ||
@@ -3277,20 +3278,22 @@ bool ScheduleManager::Action(const wxString& command, const wxString& parameters
                         PixelData * p = nullptr;
                         for (const auto& it : _overlayData)
                         {
-                            if (it->GetStartChannel() == sc && it->GetSize() == ch)
+                            if (it->GetStartChannel() == sc)
                             {
-                                p = it;
                                 if (ch == 0)
                                 {
+                                    p = it;
                                     logger_base.debug("Pixel overlay data removed.");
                                     _overlayData.remove(p);
+                                    break;
                                 }
-                                else
+                                else if (it->GetSize() == ch)
                                 {
+                                    p = it;
                                     logger_base.debug("Pixel overlay data changed.");
                                     p->SetColor(c, blendMode);
+                                    break;
                                 }
-                                break;
                             }
                         }
 
@@ -3300,6 +3303,15 @@ bool ScheduleManager::Action(const wxString& command, const wxString& parameters
                             p = new PixelData(sc, ch, c, blendMode);
                             _overlayData.push_back(p);
                         }
+                    }
+                } 
+                else if (command == "Clear all overlays")
+                {
+                    std::list<PixelData*>::iterator i = _overlayData.begin();
+                    while (i != _overlayData.end())
+                    {
+                        logger_base.debug("Pixel overlay data removed.");
+                        i = _overlayData.erase(i);
                     }
                 }
                 else if (command == "Play specified playlist step n times")
@@ -3495,7 +3507,22 @@ bool ScheduleManager::Query(const wxString& command, const wxString& parameters,
         }
         data += "],\"reference\":\""+reference+"\"}";
     }
-    else if (c == "getplayliststeps")
+    else if (c == "getplayingeffects") {
+        bool first = true;
+        data = "{\"playingeffects\":[";
+        for (const auto& it : _eventPlayLists) {
+            if (first) {
+                first = false;
+            } else {
+                data += ",";
+            }
+            auto running = it->GetRunningStep();
+            if (running != nullptr) {
+                data += "{\"name\":\"" + running->GetNameNoTime() + "\"}";
+            }
+        }
+        data += "],\"reference\":\"" + reference + "\"}";
+    } else if (c == "getplayliststeps")
     {
         PlayList* p = GetPlayList(DecodePlayList(parameters));
 

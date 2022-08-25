@@ -153,6 +153,8 @@ protected:
     bool _supportsBulkEdit;
     wxString _wildcard;
 
+    void ValidateControl();
+
     public:
 
     BulkEditFilePickerCtrl(wxWindow *parent, wxWindowID id, const wxString& path, const wxString& message, const wxString& wildcard, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize, long style = wxSL_HORIZONTAL, const wxValidator &validator = wxDefaultValidator, const wxString &name = wxSliderNameStr);

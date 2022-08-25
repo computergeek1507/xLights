@@ -116,6 +116,7 @@ static void clearUnusedProtocolProperties(wxXmlNode* node)
         node->DeleteAttribute("colorOrder");
         node->DeleteAttribute("reverse");
         node->DeleteAttribute("groupCount");
+        node->DeleteAttribute("zigZag");
         node->DeleteAttribute("ts");
     }
     if (!isDMX) {
@@ -1146,11 +1147,25 @@ void Model::AddControllerProperties(wxPropertyGridInterface* grid)
             sp = grid->AppendIn(p, new wxBoolProperty("Set Group Count", "ModelControllerConnectionPixelSetGroupCount", node->HasAttribute("groupCount")));
             sp->SetAttribute("UseCheckbox", true);
             auto sp2 = grid->AppendIn(sp, new wxUIntProperty("Group Count", "ModelControllerConnectionPixelGroupCount",
-                wxAtoi(GetControllerConnection()->GetAttribute("groupCount", "1"))));
+                                                             wxAtoi(GetControllerConnection()->GetAttribute("groupCount", "1"))));
             sp2->SetAttribute("Min", 0);
             sp2->SetAttribute("Max", 500);
             sp2->SetEditor("SpinCtrl");
             if (!node->HasAttribute("groupCount")) {
+                grid->DisableProperty(sp2);
+                grid->Collapse(sp);
+            }
+        }
+
+        if (caps == nullptr || caps->SupportsPixelZigZag()) {
+            sp = grid->AppendIn(p, new wxBoolProperty("Set Zig Zag", "ModelControllerConnectionPixelSetZigZag", node->HasAttribute("zigZag")));
+            sp->SetAttribute("UseCheckbox", true);
+            auto sp2 = grid->AppendIn(sp, new wxUIntProperty("Zig Zag", "ModelControllerConnectionPixelZigZag",
+                                                             wxAtoi(GetControllerConnection()->GetAttribute("zigZag", "0"))));
+            sp2->SetAttribute("Min", 0);
+            sp2->SetAttribute("Max", 1000);
+            sp2->SetEditor("SpinCtrl");
+            if (!node->HasAttribute("zigZag")) {
                 grid->DisableProperty(sp2);
                 grid->Collapse(sp);
             }
@@ -1289,6 +1304,16 @@ void Model::UpdateControllerProperties(wxPropertyGridInterface* grid) {
             else {
                 grid->GetPropertyByName("ModelControllerConnectionPixelSetGroupCount")->SetExpanded(true);
                 grid->GetPropertyByName("ModelControllerConnectionPixelSetGroupCount.ModelControllerConnectionPixelGroupCount")->Enable();
+            }
+        }
+
+        if (grid->GetPropertyByName("ModelControllerConnectionPixelSetZigZag") != nullptr) {
+            if (!node->HasAttribute("zigZag")) {
+                grid->GetPropertyByName("ModelControllerConnectionPixelSetZigZag")->SetExpanded(false);
+                grid->GetPropertyByName("ModelControllerConnectionPixelSetZigZag.ModelControllerConnectionPixelZigZag")->Enable(false);
+            } else {
+                grid->GetPropertyByName("ModelControllerConnectionPixelSetZigZag")->SetExpanded(true);
+                grid->GetPropertyByName("ModelControllerConnectionPixelSetZigZag.ModelControllerConnectionPixelZigZag")->Enable();
             }
         }
 
@@ -1809,8 +1834,33 @@ int Model::OnPropertyGridChange(wxPropertyGridInterface *grid, wxPropertyGridEve
         AddASAPWork(OutputModelManager::WORK_MODELS_CHANGE_REQUIRING_RERENDER, "Model::OnPropertyGridChange::ModelControllerConnectionPixelGroupCount");
         AddASAPWork(OutputModelManager::WORK_RESEND_CONTROLLER_CONFIG, "Model::OnPropertyGridChange::ModelControllerConnectionPixelGroupCount");
         return 0;
-    }
-    else if (event.GetPropertyName() == "ModelControllerConnectionPixelSetTs") {
+    } else if (event.GetPropertyName() == "ModelControllerConnectionPixelSetZigZag") {
+        GetControllerConnection()->DeleteAttribute("zigZag");
+        wxPGProperty* prop = grid->GetFirstChild(event.GetProperty());
+        grid->EnableProperty(prop, event.GetValue().GetBool());
+        if (event.GetValue().GetBool()) {
+            GetControllerConnection()->AddAttribute("zigZag", "0");
+            prop->SetValueFromInt(0);
+            grid->Expand(event.GetProperty());
+        } else {
+            grid->Collapse(event.GetProperty());
+        }
+        AddASAPWork(OutputModelManager::WORK_RGBEFFECTS_CHANGE, "Model::OnPropertyGridChange::ModelControllerConnectionPixelSetZigZag");
+        AddASAPWork(OutputModelManager::WORK_RELOAD_MODELLIST, "Model::OnPropertyGridChange::ModelControllerConnectionPixelSetZigZag");
+        AddASAPWork(OutputModelManager::WORK_MODELS_CHANGE_REQUIRING_RERENDER, "Model::OnPropertyGridChange::ModelControllerConnectionPixelSetZigZag");
+        AddASAPWork(OutputModelManager::WORK_RESEND_CONTROLLER_CONFIG, "Model::OnPropertyGridChange::ModelControllerConnectionPixelSetZigZag");
+        return 0;
+    } else if (event.GetPropertyName() == "ModelControllerConnectionPixelSetZigZag.ModelControllerConnectionPixelZigZag") {
+        GetControllerConnection()->DeleteAttribute("zigZag");
+        if (event.GetValue().GetLong() >= 0) {
+            GetControllerConnection()->AddAttribute("zigZag", wxString::Format("%i", (int)event.GetValue().GetLong()));
+        }
+        AddASAPWork(OutputModelManager::WORK_RGBEFFECTS_CHANGE, "Model::OnPropertyGridChange::ModelControllerConnectionPixelZigZag");
+        AddASAPWork(OutputModelManager::WORK_RELOAD_MODELLIST, "Model::OnPropertyGridChange::ModelControllerConnectionPixelZigZag");
+        AddASAPWork(OutputModelManager::WORK_MODELS_CHANGE_REQUIRING_RERENDER, "Model::OnPropertyGridChange::ModelControllerConnectionPixelZigZag");
+        AddASAPWork(OutputModelManager::WORK_RESEND_CONTROLLER_CONFIG, "Model::OnPropertyGridChange::ModelControllerConnectionPixelZigZag");
+        return 0;
+    } else if (event.GetPropertyName() == "ModelControllerConnectionPixelSetTs") {
         GetControllerConnection()->DeleteAttribute("ts");
         wxPGProperty* prop = grid->GetFirstChild(event.GetProperty());
         grid->EnableProperty(prop, event.GetValue().GetBool());
@@ -2311,6 +2361,19 @@ wxString Model::SerialiseState() const
             }
             res += "/>\n";
         }
+    }
+
+    return res;
+}
+
+wxString Model::SerialiseConnection() const
+{
+    // Generally you dont want controller connection data in exported models
+    wxString res = "";
+
+    wxXmlNode* node = GetControllerConnection();
+    if (node->HasAttribute("zigZag")) {
+        res = "<ControllerConnection zigZag=\"" + node->GetAttribute("zigZag") + "\"/>";
     }
 
     return res;
@@ -3649,16 +3712,16 @@ void Model::InitRenderBufferNodes(const std::string &type, const std::string &ca
         }
         int cnt = 0;
         int strand = 0;
-        int strandLen = GetStrandLength(0);
+        int strandLen = GetStrandLength(GetMappedStrand(0));
         for (int x = firstNode; x < newNodes.size();) {
             if (cnt >= strandLen) {
                 strand++;
                 if (strand < GetNumStrands()) {
-                    strandLen = GetStrandLength(strand);
+                    strandLen = GetStrandLength(GetMappedStrand(strand));
                 }
                 else {
                     // not sure what to do here ... we have more nodes than strands ... so lets just start again
-                    strandLen = GetStrandLength(0);
+                    strandLen = GetStrandLength(GetMappedStrand(0));
                     strand = 0;
                 }
                 cnt = 0;
@@ -3685,16 +3748,16 @@ void Model::InitRenderBufferNodes(const std::string &type, const std::string &ca
         }
         int cnt = 0;
         int strand = 0;
-        int strandLen = GetStrandLength(0);
+        int strandLen = GetStrandLength(GetMappedStrand(0));
         for (int x = firstNode; x < newNodes.size();) {
             if (cnt >= strandLen) {
                 strand++;
                 if (strand < GetNumStrands()) {
-                    strandLen = GetStrandLength(strand);
+                    strandLen = GetStrandLength(GetMappedStrand(strand));
                 }
                 else {
                     // not sure what to do here ... we have more nodes than strands ... so lets just start again
-                    strandLen = GetStrandLength(0);
+                    strandLen = GetStrandLength(GetMappedStrand(0));
                     strand = 0;
                 }
                 cnt = 0;
@@ -5576,8 +5639,15 @@ void Model::ImportModelChildren(wxXmlNode* root, xLightsFrame* xlights, wxString
         }
         else if (n->GetName() == "faceInfo") {
             AddFace(n);
-        }
-        else if (n->GetName() == "modelGroup") {
+        } else if (n->GetName() == "ControllerConnection") {
+            if (n->HasAttribute("zigZag")) {
+                wxXmlNode* nn = GetControllerConnection();
+                if (nn->HasAttribute("zigZag")) {
+                    nn->DeleteAttribute("zigZag");
+                }
+                nn->AddAttribute("zigZag", n->GetAttribute("zigZag"));
+            }
+        } else if (n->GetName() == "modelGroup") {
             AddModelGroups(n, xlights->GetLayoutPreview()->GetVirtualCanvasWidth(),
                 xlights->GetLayoutPreview()->GetVirtualCanvasHeight(), newname, merge, showPopup);
         } else if (n->GetName() == "shadowmodels") {

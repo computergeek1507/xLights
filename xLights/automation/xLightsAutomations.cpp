@@ -111,10 +111,10 @@ bool xLightsFrame::ProcessAutomation(std::vector<std::string> &paths,
         bool prompt = false;
         
         if (params["_METHOD"] == "POST" && !params["_DATA"].empty()) {
-            wxString fname = params["_DATA"];
+            wxString data = params["_DATA"];
             wxJSONValue val;
             wxJSONReader reader;
-            if (reader.Parse(fname, &val) == 0) {
+            if (reader.Parse(data, &val) == 0) {
                 fname = val["seq"].AsString();
                 if (val.HasMember("promptIssues")) {
                     prompt = ReadBool(params["promptIssues"]);
@@ -344,7 +344,7 @@ bool xLightsFrame::ProcessAutomation(std::vector<std::string> &paths,
         }
 
         if (map == "true") {
-            std::string displayMap = FPP::CreateVirtualDisplayMap(&AllModels, GetDisplay2DCenter0());
+            std::string displayMap = FPP::CreateVirtualDisplayMap(&AllModels);
             fpp->UploadDisplayMap(displayMap);
             fpp->SetRestartFlag();
         }
@@ -678,8 +678,10 @@ bool xLightsFrame::ProcessAutomation(std::vector<std::string> &paths,
             }
         }
 
-        wxCloseEvent evt;
+        // Click on the File quit menu item
+        wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, wxID_EXIT);
         wxPostEvent(this, evt);
+
         return sendResponse("xLights closed.", "msg", 200, false);
     } else if (cmd == "lightsOn") {
         EnableOutputs(true);

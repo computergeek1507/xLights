@@ -185,7 +185,7 @@ int StarModel::GetStrandLength(int strand) const
         return 1;
     }
     else {
-        if (!Contains(_starStartLocation, "Inside")) {
+        if (Contains(_starStartLocation, "Inside")) {
             return GetStarSize(GetLayerSizeCount() - 1 - strand);
         }
         else {
@@ -206,6 +206,13 @@ int StarModel::MapToNodeIndex(int strand, int node) const
 
 int StarModel::GetNumStrands() const {
     return GetLayerSizeCount();
+}
+
+int StarModel::GetMappedStrand(int strand) const {
+    if (GetLayerSizeCount() != 0) {
+        return GetLayerSizeCount() - strand - 1;
+    }
+    return strand;
 }
 
 bool StarModel::AllNodesAllocated() const
