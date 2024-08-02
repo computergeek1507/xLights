@@ -66,7 +66,7 @@ jobs:
   build:
     env:
 
-      SOLUTION_BANCH: "${{ on.pull_request && github.event.pull_request.head.ref || 'master' }}"
+      SOLUTION_BANCH: "${{ github.event.issue.pull_request && github.event.pull_request.head.ref || 'master' }}"
     runs-on: windows-2022
 
     steps:
