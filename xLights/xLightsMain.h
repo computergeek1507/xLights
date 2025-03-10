@@ -20,6 +20,8 @@
     #endif
 #endif
 
+#define ENABLE_SERVICES
+
 // Every time this regenerates from code blocks you will need to remove wx/led.h
 
 //(*Headers(xLightsFrame)
@@ -84,9 +86,11 @@
 #include "SequencePackage.h"
 #include "ScriptsDialog.h"
 #include "TipOfTheDayDialog.h"
+#include <CheckSequenceReport.h>
 
 class wxDebugReport;
 
+class aiBase;
 class ControllerCaps;
 class EffectTreeDialog;
 class ConvertDialog;
@@ -640,6 +644,7 @@ public:
     void OnButtonFPPConnectClick(wxCommandEvent& event);
     void OnButton_OpenBaseShowDirClick(wxCommandEvent& event);
     void OnMenuItemFindShowFolderSelected(wxCommandEvent& event);
+    void OnMenuItemShiftEffectsAndTimingSelected(wxCommandEvent& event);
     //*)
     void OnCharHook(wxKeyEvent& event);
     void OnHelp(wxHelpEvent& event);
@@ -654,6 +659,9 @@ private :
 	void SetEffectAssistWindowState(bool show);
     void UpdateEffectAssistWindow(Effect* effect, RenderableEffect* ren_effect);
     void AddDebugFilesToReport(wxDebugReport &report);
+    wxTimer* _pingTimer;
+    wxTimer* _statusRefreshTimer;
+    bool _pingInProgress = false;
 
 public:
 
@@ -760,6 +768,7 @@ public:
     static const wxWindowID ID_FILE_BACKUP;
     static const wxWindowID ID_FILE_RESTOREBACKUP;
     static const wxWindowID ID_FILE_ALTBACKUP;
+    static const wxWindowID ID_SHIFT_EFFECTS_AND_TIMING;
     static const wxWindowID ID_SHIFT_EFFECTS;
     static const wxWindowID ID_MNU_SHIFT_SELECTED_EFFECTS;
     static const wxWindowID ID_MNU_COLOURREPLACE;
@@ -959,6 +968,7 @@ public:
     wxMenuItem* MenuItemSearchEffects;
     wxMenuItem* MenuItemSelectEffect;
     wxMenuItem* MenuItemShiftEffects;
+    wxMenuItem* MenuItemShiftEffectsAndTiming;
     wxMenuItem* MenuItemShiftSelectedEffects;
     wxMenuItem* MenuItemUserDict;
     wxMenuItem* MenuItemValueCurves;
@@ -1115,6 +1125,7 @@ public:
     bool _autoSavePerspecive = true;
     bool _ignoreVendorModelRecommendations = false;
     bool _purgeDownloadCacheOnStart = false;
+    int _controllerPingInterval = 0;
     int _fseqVersion;
     int _timelineZooming;
     bool _wasMaximised = false;
@@ -1180,6 +1191,9 @@ public:
 
     bool GridIconBackgrounds() const { return mGridIconBackgrounds;}
     void SetGridIconBackgrounds(bool b);
+
+    bool ShowGroupEffectIndicator() const { return mShowGroupEffectIndicator;}
+    void SetShowGroupEffectIndicator(bool b);
 
     bool SmallWaveform() const { return _smallWaveform; }
     void SetSmallWaveform(bool b);
@@ -1252,6 +1266,8 @@ public:
 
     bool GetIgnoreVendorModelRecommendations() const { return _ignoreVendorModelRecommendations; }
     void SetIgnoreVendorModelRecommendations(bool b) { _ignoreVendorModelRecommendations = b; }
+    int GetControllerPingInterval() const { return _controllerPingInterval; }
+    void SetControllerPingInterval(int secs) { _controllerPingInterval = secs; }
     void PurgeDownloadCache();
 
     bool GetPurgeDownloadCacheOnStart() const { return _purgeDownloadCacheOnStart; }
@@ -1303,6 +1319,10 @@ public:
     bool HidePresetPreview() const { return _hidePresetPreview;}
     void SetHidePresetPreview(bool b);
 
+    void SetServiceSetting(const std::string& setting, const std::string& value);
+    std::string GetServiceSetting(const std::string& setting, const std::string& defaultValue = "");
+    std::unique_ptr<aiBase> GetLLM();
+
     bool IsShowBaseShowFolder() const
     {
         return _showBaseShowFolder;
@@ -1318,9 +1338,11 @@ public:
     int EffectAssistMode() const { return mEffectAssistMode;}
     void SetEffectAssistMode(int i);
 
-    int GetModelHandleScale() const { return _modelHandleSize; }
-    int ModelHandleSize() const { return _modelHandleSize;}
+    int GetModelHandleSize() const { return _modelHandleSize; }
     void SetModelHandleSize(int i);
+
+    int GetCrosshairSize() const { return _crosshairSize; }
+    void SetCrosshairSize(int i);
 
     const wxArrayString &RandomEffectsToUse() const { return _randomEffectsToUse;}
     void SetRandomEffectsToUse(const wxArrayString &e);
@@ -1368,6 +1390,9 @@ public:
     void SelectController(const std::string& controllerName);
     void UnselectAllControllers();
     void InitialiseControllersTab(bool rebuildPropGrid = true);
+    void OnPingTimer(wxTimerEvent& event);
+    void StatusRefreshTimer(wxTimerEvent& event);
+    wxBitmap CreateLedBitmap(bool online);
     void SetControllersProperties(bool rebuildPropGrid = true);
     void DeleteSelectedControllers();
     void UnlinkSelectedControllers();
@@ -1622,6 +1647,7 @@ private:
     int mIconSize;
     int mGridSpacing;
     bool mGridIconBackgrounds;
+    bool mShowGroupEffectIndicator = true;
     bool mTimingPlayOnDClick;
     bool mGridNodeValues;
     int mEffectAssistMode = 0;
@@ -1630,6 +1656,7 @@ private:
     int abortedRenderJobs = 0;
     bool mSaveFseqOnSave;
     int _modelHandleSize = 1;
+    int _crosshairSize = 1;
 
     class RenderTree {
     public:
@@ -1851,9 +1878,9 @@ private:
     void ValidateEffectAssets();
     bool CleanupRGBEffectsFileLocations();
     bool CleanupSequenceFileLocations();
-    void CheckElement(Element* e, wxFile& f, size_t& errcount, size_t& warncount, const std::string& name, const std::string& modelName, bool& videoCacheWarning, bool& disabledEffects, std::list<std::pair<std::string, std::string>>& faces, std::list<std::pair<std::string, std::string>>& states, std::list<std::string>& viewPoints, bool& usesShader, std::list<std::string>& allfiles);
-    void CheckEffect(Effect* ef, wxFile& f, size_t& errcount, size_t& warncount, const std::string& name, const std::string& modelName, bool node, bool& videoCacheWarning, bool& disabledEffects, std::list<std::pair<std::string, std::string>>& faces, std::list<std::pair<std::string, std::string>>& states, std::list<std::string>& viewPoints);
-    bool CheckStart(wxFile& f, const std::string& startmodel, std::list<std::string>& seen, std::string& nextmodel);
+    void CheckElement(Element* e, wxFile& f, CheckSequenceReport& report, bool writeToTextFile, size_t& errcount, size_t& warncount, const std::string& name, const std::string& modelName, bool& videoCacheWarning, bool& disabledEffects, std::list<std::pair<std::string, std::string>>& faces, std::list<std::pair<std::string, std::string>>& states, std::list<std::string>& viewPoints, bool& usesShader, std::list<std::string>& allfiles);
+    void CheckEffect(Effect* ef, wxFile& f, CheckSequenceReport& report, bool writeToTextFile, size_t& errcount, size_t& warncount, const std::string& name, const std::string& modelName, bool node, bool& videoCacheWarning, bool& disabledEffects, std::list<std::pair<std::string, std::string>>& faces, std::list<std::pair<std::string, std::string>>& states, std::list<std::string>& viewPoints);
+    bool CheckStart(wxFile& f, CheckSequenceReport& report, bool writeToTextFile, size_t& errcount, size_t& warncount, const std::string& startmodel, std::list<std::string>& seen, std::string& nextmodel);
     void ValidateWindow();
     void DoDonate();
     void AutoShowHouse();

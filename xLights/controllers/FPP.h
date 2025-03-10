@@ -59,6 +59,8 @@ class FPP : public BaseController
 
     std::string proxy;
     std::set<std::string> proxies;
+    bool isaProxy = false;
+    bool solePlayer = false;
 
     std::string username;
     std::string password;
@@ -68,6 +70,7 @@ class FPP : public BaseController
     std::string controllerModel;
     std::string controllerVariant;
     bool upload;
+    bool canZipUpload = false;
 
     wxWindow *parent = nullptr;
     void setProgress(FPPUploadProgressDialog*d, wxGauge *g) { progressDialog = d; progress = g; }
