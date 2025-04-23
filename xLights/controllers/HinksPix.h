@@ -212,5 +212,10 @@ public:
     bool SetOutputs(ModelManager* allmodels, OutputManager* outputManager, Controller* controller, wxWindow* parent) override;
 #endif
     virtual bool UsesHTTP() const override { return true; }
+    [[nodiscard]] bool UploadFileToController(std::string const& localpathname, std::string const& remotepathname, std::function<bool(int, int, std::string)> progress) const;
+    bool UploadTimeToController() const;
+    bool UploadModeToController(unsigned char mode) const;
+    [[nodiscard]] bool GetFileInfoFromSDCard(byte cmd, std::string& files) const;
+    [[nodiscard]] int GetMPUVersion() const { return _MCPU_Version; }
 #pragma endregion
 };

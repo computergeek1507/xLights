@@ -24,6 +24,7 @@
 #include "models/ModelManager.h"
 #include "outputs/Output.h"
 #include "outputs/OutputManager.h"
+#include "HinksPix.h"
 
 #include "../xSchedule/wxJSON/jsonreader.h"
 #include "../xSchedule/wxJSON/jsonwriter.h"
@@ -32,6 +33,8 @@
 
 #include "../include/spxml-0.5/spxmlevent.hpp"
 #include "../include/spxml-0.5/spxmlparser.hpp"
+
+#include <memory>
 
 static const std::string CHECK_COL = "ID_UPLOAD_";
 static const std::string MODE_COL = "ID_MODE_";
@@ -48,25 +51,26 @@ enum class ScheduleColumn : int { PlayList = 0,
                                   Enabled };
 
 //(*IdInit(HinksPixExportDialog)
-const long HinksPixExportDialog::ID_SCROLLEDWINDOW1 = wxNewId();
-const long HinksPixExportDialog::ID_STATICTEXT3 = wxNewId();
-const long HinksPixExportDialog::ID_CHOICE_PLAYLISTS = wxNewId();
-const long HinksPixExportDialog::ID_BUTTON_ADD_PLAYLIST = wxNewId();
-const long HinksPixExportDialog::ID_BUTTON_REMOVE = wxNewId();
-const long HinksPixExportDialog::ID_STATICTEXT1 = wxNewId();
-const long HinksPixExportDialog::ID_CHOICE_FILTER = wxNewId();
-const long HinksPixExportDialog::ID_STATICTEXT2 = wxNewId();
-const long HinksPixExportDialog::ID_CHOICE_FOLDER = wxNewId();
-const long HinksPixExportDialog::ID_BITMAPBUTTON_MOVE_UP = wxNewId();
-const long HinksPixExportDialog::ID_BITMAPBUTTON_MOVE_DOWN = wxNewId();
-const long HinksPixExportDialog::ID_LISTVIEW_Sequences = wxNewId();
-const long HinksPixExportDialog::ID_PANEL1 = wxNewId();
-const long HinksPixExportDialog::ID_GRID_SCHEDULE = wxNewId();
-const long HinksPixExportDialog::ID_PANEL4 = wxNewId();
-const long HinksPixExportDialog::ID_NOTEBOOK_EXPORT_ITEMS = wxNewId();
-const long HinksPixExportDialog::ID_BUTTON_REFRESH = wxNewId();
-const long HinksPixExportDialog::ID_BUTTON_EXPORT = wxNewId();
-const long HinksPixExportDialog::wxID_Close = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_SCROLLEDWINDOW1 = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_STATICTEXT3 = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_CHOICE_PLAYLISTS = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BUTTON_ADD_PLAYLIST = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BUTTON_REMOVE = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_STATICTEXT1 = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_CHOICE_FILTER = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_STATICTEXT2 = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_CHOICE_FOLDER = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BITMAPBUTTON_MOVE_UP = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BITMAPBUTTON_MOVE_DOWN = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_LISTVIEW_Sequences = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_PANEL1 = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_GRID_SCHEDULE = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_PANEL4 = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_NOTEBOOK_EXPORT_ITEMS = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BUTTON_REFRESH = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BUTTON_EXPORT = wxNewId();
+const wxWindowID HinksPixExportDialog::ID_BUTTON_UPLOAD = wxNewId();
+const wxWindowID HinksPixExportDialog::wxID_Close = wxNewId();
 //*)
 
 const long HinksPixExportDialog::ID_MNU_SELECTALL = wxNewId();
@@ -212,8 +216,6 @@ HinksPixExportDialog::HinksPixExportDialog(wxWindow* parent, OutputManager* outp
 	HinkControllerList->SetMinSize(wxDLG_UNIT(NotebookExportItems,wxSize(-1,150)));
 	HinkControllerSizer = new wxFlexGridSizer(0, 8, 0, 0);
 	HinkControllerList->SetSizer(HinkControllerSizer);
-	HinkControllerSizer->Fit(HinkControllerList);
-	HinkControllerSizer->SetSizeHints(HinkControllerList);
 	Panel1 = new wxPanel(NotebookExportItems, ID_PANEL1, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL1"));
 	FlexGridSizer2 = new wxFlexGridSizer(2, 2, 0, 0);
 	FlexGridSizer2->AddGrowableCol(1);
@@ -251,8 +253,6 @@ HinksPixExportDialog::HinksPixExportDialog(wxWindow* parent, OutputManager* outp
 	CheckListBox_Sequences = new wxListView(Panel1, ID_LISTVIEW_Sequences, wxDefaultPosition, wxDefaultSize, wxLC_REPORT, wxDefaultValidator, _T("ID_LISTVIEW_Sequences"));
 	FlexGridSizer2->Add(CheckListBox_Sequences, 1, wxEXPAND, 0);
 	Panel1->SetSizer(FlexGridSizer2);
-	FlexGridSizer2->Fit(Panel1);
-	FlexGridSizer2->SetSizeHints(Panel1);
 	Panel4 = new wxPanel(NotebookExportItems, ID_PANEL4, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _T("ID_PANEL4"));
 	FlexGridSizer4 = new wxFlexGridSizer(0, 1, 0, 0);
 	FlexGridSizer4->AddGrowableCol(0);
@@ -271,8 +271,6 @@ HinksPixExportDialog::HinksPixExportDialog(wxWindow* parent, OutputManager* outp
 	GridSchedule->SetDefaultCellTextColour( GridSchedule->GetForegroundColour() );
 	FlexGridSizer4->Add(GridSchedule, 0, wxEXPAND, 0);
 	Panel4->SetSizer(FlexGridSizer4);
-	FlexGridSizer4->Fit(Panel4);
-	FlexGridSizer4->SetSizeHints(Panel4);
 	NotebookExportItems->AddPage(HinkControllerList, _("Controllers"), false);
 	NotebookExportItems->AddPage(Panel1, _("Playlists"), false);
 	NotebookExportItems->AddPage(Panel4, _("Schedule"), false);
@@ -284,24 +282,26 @@ HinksPixExportDialog::HinksPixExportDialog(wxWindow* parent, OutputManager* outp
 	BoxSizer1->Add(-1,-1,1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	Button_Export = new wxButton(this, ID_BUTTON_EXPORT, _("Export to SD Card"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_EXPORT"));
 	BoxSizer1->Add(Button_Export, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
+	ButtonUpload = new wxButton(this, ID_BUTTON_UPLOAD, _("Upload to Controller"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("ID_BUTTON_UPLOAD"));
+	BoxSizer1->Add(ButtonUpload, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	Button_Close = new wxButton(this, wxID_Close, _("Close"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, _T("wxID_Close"));
 	BoxSizer1->Add(Button_Close, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 	FlexGridSizer1->Add(BoxSizer1, 1, wxALL|wxEXPAND, 5);
 	SetSizer(FlexGridSizer1);
-	FlexGridSizer1->Fit(this);
 	FlexGridSizer1->SetSizeHints(this);
 
-	Connect(ID_BUTTON_ADD_PLAYLIST,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnButtonAddPlaylistClick);
-	Connect(ID_BUTTON_REMOVE,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnButtonRemoveClick);
-	Connect(ID_BITMAPBUTTON_MOVE_UP,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnBitmapButtonMoveUpClick);
-	Connect(ID_BITMAPBUTTON_MOVE_DOWN,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnBitmapButtonMoveDownClick);
-	Connect(ID_LISTVIEW_Sequences,wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK,(wxObjectEventFunction)&HinksPixExportDialog::SequenceListPopup);
-	Connect(ID_GRID_SCHEDULE,wxEVT_GRID_CELL_RIGHT_CLICK,(wxObjectEventFunction)&HinksPixExportDialog::OnGridScheduleCellRightClick);
-	Connect(ID_GRID_SCHEDULE,wxEVT_GRID_CELL_CHANGED,(wxObjectEventFunction)&HinksPixExportDialog::OnGridScheduleCellChanged);
-	Connect(ID_BUTTON_REFRESH,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnAddRefreshButtonClick);
-	Connect(ID_BUTTON_EXPORT,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnButton_ExportClick);
-	Connect(wxID_Close,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&HinksPixExportDialog::OnButton_CloseClick);
-	Connect(wxID_ANY,wxEVT_CLOSE_WINDOW,(wxObjectEventFunction)&HinksPixExportDialog::OnClose);
+	Connect(ID_BUTTON_ADD_PLAYLIST, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnButtonAddPlaylistClick);
+	Connect(ID_BUTTON_REMOVE, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnButtonRemoveClick);
+	Connect(ID_BITMAPBUTTON_MOVE_UP, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnBitmapButtonMoveUpClick);
+	Connect(ID_BITMAPBUTTON_MOVE_DOWN, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnBitmapButtonMoveDownClick);
+	Connect(ID_LISTVIEW_Sequences, wxEVT_COMMAND_LIST_ITEM_RIGHT_CLICK, (wxObjectEventFunction)&HinksPixExportDialog::SequenceListPopup);
+	Connect(ID_GRID_SCHEDULE, wxEVT_GRID_CELL_RIGHT_CLICK, (wxObjectEventFunction)&HinksPixExportDialog::OnGridScheduleCellRightClick);
+	Connect(ID_GRID_SCHEDULE, wxEVT_GRID_CELL_CHANGED, (wxObjectEventFunction)&HinksPixExportDialog::OnGridScheduleCellChanged);
+	Connect(ID_BUTTON_REFRESH, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnAddRefreshButtonClick);
+	Connect(ID_BUTTON_EXPORT, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnButton_ExportClick);
+	Connect(ID_BUTTON_UPLOAD, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnButtonUploadClick);
+	Connect(wxID_Close, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HinksPixExportDialog::OnButton_CloseClick);
+	Connect(wxID_ANY, wxEVT_CLOSE_WINDOW, (wxObjectEventFunction)&HinksPixExportDialog::OnClose);
 	//*)
 
     AddInstanceHeader("Create");
@@ -1048,7 +1048,7 @@ void HinksPixExportDialog::OnButton_ExportClick(wxCommandEvent& /*event*/) {
                 play.HSEQ = shortHseqName;
             }
             if (worked) {
-                playlist.saveAsFile(drive);
+                playlist.saveToDrive(drive);
             } else {
                 error = true;
             }
@@ -1061,7 +1061,7 @@ void HinksPixExportDialog::OnButton_ExportClick(wxCommandEvent& /*event*/) {
                 error = true;
                 errorMsg = wxString::Format("'%s' Schedule was invalid!\n%s", schedule.Day, reason);
             }
-            schedule.saveAsFile(drive);
+            schedule.saveToDrive(drive);
         }
         createModeFile(drive, GetChoiceValueIndex(MODE_COL + rowStr));
     }
@@ -1075,6 +1075,190 @@ void HinksPixExportDialog::OnButton_ExportClick(wxCommandEvent& /*event*/) {
     }
     // EndDialog(wxID_CLOSE);
 }
+
+void HinksPixExportDialog::OnButtonUploadClick(wxCommandEvent& event)
+{
+    static log4cpp::Category& logger_base = log4cpp::Category::getInstance(std::string("log_base"));
+
+    if (!m_selectedPlayList.empty()) {
+        StoreToObjectPlayList(m_selectedPlayList);
+    }
+    StoreToObjectSchedule();
+
+    if (m_playLists.empty()) {
+        DisplayError("No Playlists found\nPlease Add a Playlist");
+        return;
+    }
+    int totalProgress{ 0 };
+    std::for_each(m_playLists.begin(), m_playLists.end(), [&totalProgress](auto const& pl) { totalProgress += pl.Items.size(); });
+    totalProgress *= m_hixControllers.size();
+    totalProgress += 2;
+
+    wxProgressDialog prgs(
+        "Generating HinksPix Files", "Generating HinksPix Files", totalProgress, this, wxPD_CAN_ABORT | wxPD_APP_MODAL | wxPD_AUTO_HIDE);
+    prgs.Show();
+
+    std::map<wxString, wxString> shortNames;
+    std::vector<wxString> names;
+    for (auto& playlist : m_playLists) {
+        for (auto& play : playlist.Items) {
+            if (shortNames.find(play.FSEQ) == shortNames.end()) {
+                wxString const shortName = createUniqueShortName(play.FSEQ, names);
+                shortNames.insert({ play.FSEQ, shortName });
+                names.push_back(shortName);
+            }
+        }
+    }
+
+    std::function<bool(int,int, std::string)> updateProg = [&prgs](int val, int tol, std::string msg) {
+        prgs.SetRange(tol);
+        prgs.Update(val, msg);
+        return !prgs.WasCancelled();
+    };
+
+    bool error = false;
+    wxString errorMsg;
+    int count = 0;
+    int row = 0;
+    for (auto* hix : m_hixControllers) {
+        std::string const rowStr = std::to_string(row);
+        ++row;
+        bool upload = GetCheckValue(CHECK_COL + rowStr);
+        if (!upload) {
+            ++count;
+            continue;
+        }
+        prgs.Update(count, wxString::Format("Connecting to HinksPix for '%s' '%s'", hix->GetName(), hix->GetIP()));
+        std::unique_ptr<HinksPix> hixpix = std::make_unique<HinksPix>(hix->GetIP(), hix->GetFPPProxy());
+        if (!hixpix->IsConnected()) {
+            error = true;
+            errorMsg = wxString::Format("Could not connect to '%s'", hix->GetName());
+            continue;
+        }
+
+        if (hixpix->GetMPUVersion() < 128) {
+            error = true;
+            errorMsg = wxString::Format("'%s' CPU Firmware is too old (v%d) Update to v128 or Newer.", hix->GetName(), hixpix->GetMPUVersion());
+            continue;
+        }
+        std::string ttt;
+        hixpix->GetFileInfoFromSDCard('A', ttt);
+        hixpix->GetFileInfoFromSDCard('B', ttt);
+        prgs.Update(++count, wxString::Format("Generating HinksPix Files for '%s'", hix->GetName()));
+
+        wxString slaveName1 = GetChoiceValue(SLAVE1_COL + rowStr);
+        wxString slaveName2 = GetChoiceValue(SLAVE2_COL + rowStr);
+
+        if (!slaveName1.IsEmpty() && slaveName1 == slaveName2) {
+            error = true;
+            errorMsg = wxString::Format("Slave Controller 1 and 2 cannot not be the same: '%s'", slaveName1);
+            continue;
+        }
+
+        auto* slave1 = getSlaveController(slaveName1);
+        auto* slave2 = getSlaveController(slaveName2);
+
+        if (!slave1 && slave2) {
+            std::swap(slave1, slave2);
+        }
+
+        if (slave1 && slave2) {
+            if (slave2->GetOutputCount() > slave1->GetOutputCount()) {
+                std::swap(slave1, slave2);
+            }
+        }
+
+        if (slave1 || slave2) {
+            if (!CheckSlaveControllerSizes(hix, slave1, slave2)) {
+                error = true;
+                errorMsg = wxString::Format("Too Many Slave Controller Universes for '%s'", hix->GetName());
+                continue;
+            }
+        }
+
+        std::vector<wxString> filesDone;
+        for (auto& playlist : m_playLists) {
+            bool worked{ true };
+            for (auto& play : playlist.Items) {
+                wxString const shortName = shortNames.at(play.FSEQ);
+                wxString const shortHseqName = shortName + ".hseq";
+                prgs.Update(++count, "Generating HSEQ File " + shortHseqName);
+
+                auto tempFileName = ToStdString(wxFileName::CreateTempFileName(ToWXString(shortName)));
+
+                if (std::find(filesDone.begin(), filesDone.end(), play.FSEQ) == filesDone.end()) {
+                    worked &= Create_HinksPix_HSEQ_File(play.FSEQ, tempFileName, hix, slave1, slave2, errorMsg);
+                    worked &= hixpix->UploadFileToController(tempFileName, shortHseqName, updateProg);
+                    if (!worked) {
+                        break;
+                    }
+                    filesDone.push_back(play.FSEQ);
+                }
+                if (worked && !play.Audio.IsEmpty()) {
+                    wxString auName = shortName + ".au";
+                    prgs.Update(count, "Generating AU File " + auName);
+                    if (std::find(filesDone.begin(), filesDone.end(), auName) == filesDone.end()) {
+                        AudioLoader audioLoader(play.Audio.ToStdString(), 44100, true);
+                        worked &= audioLoader.loadAudioData();
+
+                        if (worked) {
+                            auto tempFileName2 = ToStdString(wxFileName::CreateTempFileName(ToWXString(shortName)));
+                            worked &= Make_AU_From_ProcessedAudio(audioLoader.processedAudio(), tempFileName2, errorMsg);
+                            worked &= hixpix->UploadFileToController(tempFileName2, auName, updateProg);
+                            if (!worked) {
+                                break;
+                            }
+                            filesDone.push_back(auName);
+                        } else {
+                            AudioLoader::State loaderState = audioLoader.state();
+                            AudioReaderDecoderInitState decoderInitState = AudioReaderDecoderInitState::NoInit;
+                            audioLoader.readerDecoderInitState(decoderInitState);
+                            AudioResamplerInitState resamplerInitState = AudioResamplerInitState::NoInit;
+                            audioLoader.resamplerInitState(resamplerInitState);
+                            logger_base.error("HinksPixExportDialog export - loading audio fails - %d : %d : %d", int(loaderState), int(decoderInitState), int(resamplerInitState));
+                        }
+                    }
+                    play.AU = auName;
+                }
+                play.HSEQ = shortHseqName;
+            }
+            if (worked) {
+                auto temp_playlist = ToStdString(wxFileName::CreateTempFileName("playlist"));
+                playlist.saveAsFile(temp_playlist);
+                worked &= hixpix->UploadFileToController(temp_playlist, playlist.getFileName(), updateProg);
+            } else {
+                error = true;
+            }
+        }
+        prgs.Update(++count, "Generating Schedule File");
+        for (const auto& schedule : m_schedules) {
+            wxString reason;
+            if (!schedule.isValid(reason)) {
+                error = true;
+                errorMsg = wxString::Format("'%s' Schedule was invalid!\n%s", schedule.Day, reason);
+            }
+            auto temp_schedule = ToStdString(wxFileName::CreateTempFileName("schedule"));
+            schedule.saveAsFile(temp_schedule);
+            auto worked = hixpix->UploadFileToController(temp_schedule, schedule.getFileName(), updateProg);
+        }
+        hixpix->UploadTimeToController();
+        auto mode = GetChoiceValueIndex(MODE_COL + rowStr);
+        if (mode == 0) {
+            hixpix->UploadModeToController('G');// master
+        } else if(mode == 1) {
+            hixpix->UploadModeToController('H'); // slave
+        }
+    }
+
+    SaveSettings();
+    prgs.Hide();
+    if (error) {
+        DisplayError("HinksPix File Generation Error\n" + errorMsg);
+    } else {
+        wxMessageBox("HinksPix File Generation Complete");
+    }
+}
+
 
 void HinksPixExportDialog::OnBitmapButtonMoveDownClick(wxCommandEvent& /*event*/) {
     for (int i = CheckListBox_Sequences->GetItemCount() - 1; i >= 0; --i) {
@@ -1251,10 +1435,18 @@ bool HinksPixExportDialog::Create_HinksPix_HSEQ_File(wxString const& fseqFile, w
     uint32_t const ogNumber_of_Frames = xf->getNumFrames();
     uint32_t const ogNumChannels = xf->getChannelCount();
     int const ogFrame_Rate = xf->getStepTime();
-    if (ogFrame_Rate != 50) {
-        errorMsg = wxString::Format("HinksPix Failed Framerate must be 50Ms FSEQ %s", fseqFile);
-        logger_base.error(errorMsg);
-        return false;
+    if (hix->GetName() == "PRO V3") {
+        if (ogFrame_Rate != 50 && ogFrame_Rate != 25) {
+            errorMsg = wxString::Format("HinksPix Failed Framerate must be 25ms or 50ms FSEQ %s", fseqFile);
+            logger_base.error(errorMsg);
+            return false;
+        }
+    } else {
+        if (ogFrame_Rate != 50 ) {
+            errorMsg = wxString::Format("HinksPix Failed Framerate must be 50ms FSEQ %s", fseqFile);
+            logger_base.error(errorMsg);
+            return false;
+        }
     }
 
     std::vector<std::pair<uint32_t, uint32_t>> rng;

@@ -207,6 +207,14 @@
 						<border>5</border>
 					</object>
 					<object class="sizeritem">
+						<object class="wxButton" name="ID_BUTTON_UPLOAD" variable="ButtonUpload" member="yes">
+							<label>Upload to Controller</label>
+							<handler function="OnButtonUploadClick" entry="EVT_BUTTON" />
+						</object>
+						<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+					</object>
+					<object class="sizeritem">
 						<object class="wxButton" name="wxID_Close" variable="Button_Close" member="no">
 							<label>Close</label>
 							<handler function="OnButton_CloseClick" entry="EVT_BUTTON" />
